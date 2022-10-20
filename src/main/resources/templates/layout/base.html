@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <link th:href="@{/css/style.css}" rel="stylesheet" />
@@ -11,21 +11,25 @@
         <nav class="navbar">
             <a href="/" class="navbar__brand">写真共有APP</a>
             <div class="navbar__menu">
-                <div class="navbar__item">
-                    <a class="button" href="/photo">
-                        <i class="icon ion-md-add"></i>
-                        Submit a photo
-                    </a>
-                </div>
-                <span class="navbar__item">
-                    username
-                </span>
-                <div class="navbar__item">
-                    <a href="/login" class="button button--link">Login</a>
-                </div>
-                <div class="navbar__item">
-                    <a href="/signup" class="button button--link">Signup</a>
-                </div>
+                <th:block sec:authorize="isAuthenticated()">
+                    <div class="navbar__item">
+                        <a class="button" href="/photo">
+                            <i class="icon ion-md-add"></i>
+                            Submit a photo
+                        </a>
+                    </div>
+                    <span class="navbar__item">
+                        <th:block sec:authentication="principal.username"></th:block>
+                    </span>
+                </th:block>
+                <th:block sec:authorize="!isAuthenticated()">
+                    <div class="navbar__item">
+                        <a href="/login" class="button button--link">Login</a>
+                    </div>
+                    <div class="navbar__item">
+                        <a href="/signup" class="button button--link">Signup</a>
+                    </div>
+                </th:block>
             </div>
         </nav>
     </header>
@@ -35,11 +39,15 @@
         </div>
     </main>
     <footer class="footer">
-        <form th:action="@{/logout}" method="post">
-            <button type="submit" class="button button--link">Logout</button>
-        </form>
-        <a href="/login" class="button button--link">Login</a>
-        <a href="/signup" class="button button--link">Signup</a>
+        <div sec:authorize="isAuthenticated()">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="button button--link">Logout</button>
+            </form>
+        </div>
+        <div sec:authorize="!isAuthenticated()">
+            <a href="/login" class="button button--link">Login</a>
+            <a href="/signup" class="button button--link">Signup</a>
+        </div>
     </footer>
     <script layout:fragment="script"></script>
 </body>
