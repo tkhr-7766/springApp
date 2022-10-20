@@ -14,6 +14,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain SecurityFilterChain(HttpSecurity http) throws Exception {
         http.formLogin(login -> login
+                .loginPage("/login") // ログインページのURL
+                .loginProcessingUrl("/login") // ログイン処理(POST)のURL
+                .usernameParameter("email") // 認証のusernameに使用する属性
+                .passwordParameter("password") // 認証のpasswordに使用する属性
                 .defaultSuccessUrl("/") // ログイン成功後にデフォルトで飛ばされるURL
                 .failureUrl("/login?error") // ログイン失敗時に飛ばされるURL
                 .permitAll()) // loginページは常にアクセスを許可する
