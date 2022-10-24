@@ -25,7 +25,7 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")) // ログアウト後のURL
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() // cssなど静的ファイルは常にアクセスを許可する
-                        .mvcMatchers("/login").permitAll() // loginページは常にアクセスを許可する
+                        .mvcMatchers("/login", "/signup").permitAll() // loginページ、signupページは常にアクセスを許可する
                         .anyRequest().authenticated()); // その他のリクエストは常に認証を必要とする
 
         return http.build();
