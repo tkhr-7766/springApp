@@ -12,11 +12,14 @@
                     <div th:text="${signupError}" class="errors"></div>
                 </div>
                 <label for="name">Name</label>
-                <input type="text" class="form__item" th:field="*{name}">
+                <input type="text" class="form__item" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'has-error'">
+                <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="invalid-feedback"></div>
                 <label for="email">Email</label>
-                <input type="text" class="form__item" th:field="*{email}">
+                <input type="text" class="form__item" th:field="*{email}" th:classappend="${#fields.hasErrors('email')} ? 'has-error'">
+                <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="invalid-feedback"></div>
                 <label for="password">Password</label>
-                <input type="password" class="form__item" th:field="*{password}">
+                <input type="password" class="form__item" th:field="*{password}" th:classappend="${#fields.hasErrors('password')} ? 'has-error'">
+                <div th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="invalid-feedback"></div>
                 <div class="form__button">
                     <button type="submit" class="button button--inverse">signup</button>
                 </div>
