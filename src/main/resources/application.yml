@@ -6,3 +6,17 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   messages:
     basename: messages/messages,messages/validationMessages
+# ☆ここから下を追加
+cloud:
+  aws:
+    credentials:
+      accessKey: access
+      secretKey: secretkey
+    stack:
+      auto: false
+    region:
+      static: us-east-1
+      auto: false
+    s3:
+      endpoint: http://minio:9000
+      bucket-name: static
