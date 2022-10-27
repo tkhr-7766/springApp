@@ -41,7 +41,7 @@ public class PhotoController {
     
     @GetMapping("/")
     public String index(
-            @PageableDefault(page = 0, size = 3, direction = Direction.DESC, sort = { "created" }) Pageable pageable,
+            @PageableDefault(page = 0, size = 12, direction = Direction.DESC, sort = { "created" }) Pageable pageable,
             Model model) {
 
         // photosテーブルから一覧を取得
