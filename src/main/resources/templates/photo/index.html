@@ -5,7 +5,38 @@
 </head>
 <body>
     <div layout:fragment="content" class="container">
-        <h1>TOP</h1>
+        <div class="photo-list">
+            <div class="grid">
+                <div th:each="item: ${photos}" th:object="${item}" class="grid__item">
+                    <div class="photo">
+                        <figure class="photo__wrapper">
+                            <img class="photo__image photo__image--portrait" th:src="${item.url}" th:alt="'Photo by '+${item.photo.user.name}">
+                        </figure>
+                        <div th:href="'/photo/'+${item.photo.id}" class="photo__overlay" onclick="transition(this)">
+                            <div class="photo__controls">
+                                <button class="photo__action photo__action--like">
+                                    <i class="icon ion-md-heart"></i>
+                                    <span class="likes-count">12</span>
+                                </button>
+                                <a th:href="'/photo/'+${item.photo.id}+'/download'" class="photo__action">
+                                    <i class="icon ion-md-arrow-round-down"></i>
+                                </a>
+                            </div>
+                            <div class="photo__username" th:text="${item.photo.user.name}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pagination">
+                <a th:if="${!page.first}" th:href="'/?page='+${page.number-1}" class="button">&laquo; prev</a>
+                <a th:if="${!page.last}" th:href="'/?page='+${page.number+1}" class="button">next &raquo;</a>
+            </div>
+        </div>
     </div>
+    <script layout:fragment="script">
+        function transition(self) {
+            location.href = self.getAttribute('href');
+        }
+    </script>
 </body>
 </html>

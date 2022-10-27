@@ -1,17 +1,30 @@
 package com.spring.app.controller;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.app.aws.s3.S3Service;
+import com.spring.app.data.PhotoData;
 import com.spring.app.entity.Photo;
 import com.spring.app.form.FileUploadForm;
 import com.spring.app.security.LoginUser;
@@ -27,7 +40,26 @@ public class PhotoController {
     private PhotoService photoService;
     
     @GetMapping("/")
-    public String index() {
+    public String index(
+            @PageableDefault(page = 0, size = 3, direction = Direction.DESC, sort = { "created" }) Pageable pageable,
+            Model model) {
+
+        // photosテーブルから一覧を取得
+        // 引数として受け取っているPageableクラスを渡すことでページネート機能を実現している
+        Page<Photo> photos = photoService.findAll(pageable);
+
+        // PhotoDataを中にもつListクラスのインスタンスを用意
+        List<PhotoData> photoList = new ArrayList<>();
+
+        // photosテーブルのfilenameから公開URLを取得し、PhotoDataのインスタンスに格納
+        for (Photo photo : photos) {
+            PhotoData photoData = new PhotoData(photo, s3Service.getUrl(photo.getFilename()));
+            photoList.add(photoData);
+        }
+
+        model.addAttribute("page", photos);
+        model.addAttribute("photos", photoList);
+
         return "photo/index";
     }
 
@@ -71,5 +103,35 @@ public class PhotoController {
         }
 
         return "redirect:/";
+    }
+
+    @GetMapping("/photo/{id}/download")
+    public void download(@PathVariable("id") String id, HttpServletResponse response) {
+
+        // IDからファイル名を取得
+        Photo photo = photoService.findById(id).get();
+        String filename = photo.getFilename();
+
+        // ファイル名からダウンロード対象のバイナリデータを取得
+        byte[] binary = s3Service.getFileByteArray(filename);
+
+        /**
+         * レスポンスの内容を Web ページとして表示するのではなく
+         * ダウンロードさせるための保存ダイアログを開くようにブラウザに指示
+         */
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment; filename=" + filename);
+        response.setContentLength(binary.length);
+
+        OutputStream os = null;
+
+        // レスポンスにバイナリデータを書き込む
+        try {
+            os = response.getOutputStream();
+            os.write(binary);
+            os.flush();
+        } catch (IOException e) {
+            e.getStackTrace();
+        }
     }
 }
