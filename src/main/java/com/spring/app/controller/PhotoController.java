@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spring.app.aws.s3.S3Service;
 import com.spring.app.data.PhotoData;
 import com.spring.app.entity.Photo;
+import com.spring.app.exception.NotFoundException;
 import com.spring.app.form.FileUploadForm;
 import com.spring.app.security.LoginUser;
 import com.spring.app.service.PhotoService;
@@ -132,6 +134,30 @@ public class PhotoController {
             os.flush();
         } catch (IOException e) {
             e.getStackTrace();
+        }
+    }
+
+    @GetMapping("/photo/{id}")
+    public String show(@PathVariable("id") String id, Model model)
+            throws NotFoundException {
+        try {
+
+            // photosテーブルからIDをもとに取得
+            Photo photo = photoService.findById(id).get();
+            // filenameから公開URLを取得
+            String url = s3Service.getUrl(photo.getFilename());
+            // PhotoDataのインスタンスに格納
+            PhotoData photoData = new PhotoData(photo, url);
+
+            model.addAttribute("item", photoData);
+
+            return "photo/show";
+        } catch (NoSuchElementException e) {
+            /**
+             * photosテーブルからデータが取得できなかった場合に NoSuchElementExceptionが発生するので
+             * catchしてNotFoundException（404エラー）を発生させる
+             */
+            throw new NotFoundException("データが存在しません。");
         }
     }
 }
