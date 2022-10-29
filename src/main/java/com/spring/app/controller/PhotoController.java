@@ -3,6 +3,8 @@ package com.spring.app.controller;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -23,13 +25,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.spring.app.aws.s3.S3Service;
 import com.spring.app.data.PhotoData;
+import com.spring.app.entity.Comment;
 import com.spring.app.entity.Photo;
 import com.spring.app.exception.NotFoundException;
+import com.spring.app.form.AddCommentForm;
 import com.spring.app.form.FileUploadForm;
 import com.spring.app.security.LoginUser;
+import com.spring.app.service.CommentService;
 import com.spring.app.service.PhotoService;
 
 @Controller
@@ -40,6 +46,9 @@ public class PhotoController {
 
     @Autowired
     private PhotoService photoService;
+
+    @Autowired
+    private CommentService commentService;
     
     @GetMapping("/")
     public String index(
@@ -141,23 +150,63 @@ public class PhotoController {
     public String show(@PathVariable("id") String id, Model model)
             throws NotFoundException {
         try {
-
-            // photosテーブルからIDをもとに取得
-            Photo photo = photoService.findById(id).get();
-            // filenameから公開URLを取得
-            String url = s3Service.getUrl(photo.getFilename());
-            // PhotoDataのインスタンスに格納
-            PhotoData photoData = new PhotoData(photo, url);
-
-            model.addAttribute("item", photoData);
+            if (!model.containsAttribute("item")) {
+                PhotoData photoData = this.getPhotoData(id);
+                model.addAttribute("item", photoData);
+                model.addAttribute("addCommentForm", new AddCommentForm());
+            }
 
             return "photo/show";
         } catch (NoSuchElementException e) {
-            /**
-             * photosテーブルからデータが取得できなかった場合に NoSuchElementExceptionが発生するので
-             * catchしてNotFoundException（404エラー）を発生させる
-             */
             throw new NotFoundException("データが存在しません。");
         }
+    }
+
+    @PostMapping("/photo/{id}/comment")
+    public String addComment(@Validated AddCommentForm addCommentForm, BindingResult result,
+            @PathVariable("id") String id, @AuthenticationPrincipal LoginUser loginUser,
+            RedirectAttributes redirectAttributes) {
+
+        if (result.hasErrors()) {
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.addCommentForm", result);
+            PhotoData photoData = this.getPhotoData(id);
+            redirectAttributes.addFlashAttribute("item", photoData);
+            return "redirect:/photo/" + id;
+        }
+
+        try {
+            Photo photo = photoService.findById(id).get();
+            Comment comment = new Comment();
+            comment.setContent(addCommentForm.getContent());
+            comment.setUser(loginUser.getUser());
+            comment.setPhoto(photo);
+
+            commentService.save(comment);
+        } catch (NoSuchElementException e) {
+            throw new NotFoundException("データが存在しません。");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("addCommentError", "コメント保存に失敗しました。");
+            PhotoData photoData = this.getPhotoData(id);
+            redirectAttributes.addFlashAttribute("item", photoData);
+        }
+
+        return "redirect:/photo/" + id;
+    }
+
+    private PhotoData getPhotoData(String id) {
+        Photo photo = photoService.findById(id).get();
+
+        Collections.sort(photo.getComments(), new Comparator<Comment>() {
+            @Override
+            public int compare(Comment obj1, Comment obj2) {
+                return obj2.getId().compareTo(obj1.getId());
+            }
+        });
+
+        String url = s3Service.getUrl(photo.getFilename());
+
+        PhotoData photoData = new PhotoData(photo, url);
+
+        return photoData;
     }
 }

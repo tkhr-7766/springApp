@@ -20,6 +20,23 @@
                 <h2 class="photo-detail__title">
                     <i class="icon ion-md-chatboxes"></i>Comments
                 </h2>
+                <ul th:if="!${#lists.isEmpty(item.photo.comments)}" class="photo-detail__comments">
+                    <li th:each="comment: ${item.photo.comments}" th:object="${comment}" class="photo-detail__commentItem">
+                        <p class="photo-detail__commentBody" th:text="${comment.content}"></p>
+                        <p class="photo-detail__commentInfo" th:text="${comment.user.name}"></p>
+                    </li>
+                </ul>
+                <p th:if="${#lists.isEmpty(item.photo.comments)}">No comments yet.</p>
+                <form method="post" class="form" th:action="@{/photo/{id}/comment(id=${item.photo.id})}" th:object="${addCommentForm}">
+                    <div th:if="${addCommentError}">
+                        <div th:text="${addCommentError}" class="errors"></div>
+                    </div>
+                    <textarea class="form__item" th:field="*{content}" th:classappend="${#fields.hasErrors('content')} ? 'has-error'"></textarea>
+                    <div th:if="${#fields.hasErrors('content')}" th:errors="*{content}" class="invalid-feedback"></div>
+                    <div class="form__button">
+                        <button type="submit" class="button button--inverse">submit comment</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
