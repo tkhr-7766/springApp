@@ -14,9 +14,14 @@
                         </figure>
                         <div th:href="'/photo/'+${item.photo.id}" class="photo__overlay" onclick="transition(this)">
                             <div class="photo__controls">
-                                <button class="photo__action photo__action--like">
+                                <button class="photo__action photo__action--like" 
+                                        th:classappend="${item.likedByUser} ? 'photo__action--liked'" 
+                                        th:data-photo-id="${item.photo.id}" 
+                                        th:data-is-liked="${item.likedByUser}" 
+                                        onclick="likeOrUnlike(this, arguments[0])"
+                                >
                                     <i class="icon ion-md-heart"></i>
-                                    <span class="likes-count">12</span>
+                                    <span class="likes-count" th:text="${item.likesCount}"></span>
                                 </button>
                                 <a th:href="'/photo/'+${item.photo.id}+'/download'" class="photo__action">
                                     <i class="icon ion-md-arrow-round-down"></i>

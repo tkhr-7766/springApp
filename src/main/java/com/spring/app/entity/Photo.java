@@ -34,6 +34,10 @@ public class Photo implements Serializable {
     @Column(nullable = true)
     private List<Comment> comments;
 
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "photo")
+    @Column(nullable = true)
+    private List<Like> likes;
+
     @Column
     private String filename;
 

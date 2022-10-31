@@ -11,8 +11,14 @@
                 <figcaption th:text="'Posted by '+${item.photo.user.name}"></figcaption>
             </figure>
             <div class="photo-detail__pane">
-                <button class="button button--like">
-                    <i class="icon ion-md-heart"></i><span class="likes-count">12</span>
+                <button class="button button--like" 
+                        th:classappend="${item.likedByUser} ? 'button--liked'" 
+                        th:data-photo-id="${item.photo.id}" 
+                        th:data-is-liked="${item.likedByUser}"
+                        onclick="likeOrUnlike(this, arguments[0], true)"
+                >
+                    <i class="icon ion-md-heart"></i>
+                    <span class="likes-count" th:text="${item.likesCount}"></span>
                 </button>
                 <a th:href="'/photo/'+${item.photo.id}+'/download'" class="button">
                     <i class="icon ion-md-arrow-round-down"></i>Download

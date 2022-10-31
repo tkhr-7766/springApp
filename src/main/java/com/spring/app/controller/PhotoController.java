@@ -53,7 +53,7 @@ public class PhotoController {
     @GetMapping("/")
     public String index(
             @PageableDefault(page = 0, size = 12, direction = Direction.DESC, sort = { "created" }) Pageable pageable,
-            Model model) {
+            Model model, @AuthenticationPrincipal LoginUser loginUser) {
 
         // photosテーブルから一覧を取得
         // 引数として受け取っているPageableクラスを渡すことでページネート機能を実現している
@@ -64,7 +64,7 @@ public class PhotoController {
 
         // photosテーブルのfilenameから公開URLを取得し、PhotoDataのインスタンスに格納
         for (Photo photo : photos) {
-            PhotoData photoData = new PhotoData(photo, s3Service.getUrl(photo.getFilename()));
+            PhotoData photoData = new PhotoData(photo, s3Service.getUrl(photo.getFilename()), loginUser.getUser());
             photoList.add(photoData);
         }
 
@@ -147,11 +147,11 @@ public class PhotoController {
     }
 
     @GetMapping("/photo/{id}")
-    public String show(@PathVariable("id") String id, Model model)
+    public String show(@PathVariable("id") String id, Model model, @AuthenticationPrincipal LoginUser loginUser)
             throws NotFoundException {
         try {
             if (!model.containsAttribute("item")) {
-                PhotoData photoData = this.getPhotoData(id);
+                PhotoData photoData = this.getPhotoData(id, loginUser);
                 model.addAttribute("item", photoData);
                 model.addAttribute("addCommentForm", new AddCommentForm());
             }
@@ -169,7 +169,7 @@ public class PhotoController {
 
         if (result.hasErrors()) {
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.addCommentForm", result);
-            PhotoData photoData = this.getPhotoData(id);
+            PhotoData photoData = this.getPhotoData(id, loginUser);
             redirectAttributes.addFlashAttribute("item", photoData);
             return "redirect:/photo/" + id;
         }
@@ -186,14 +186,14 @@ public class PhotoController {
             throw new NotFoundException("データが存在しません。");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("addCommentError", "コメント保存に失敗しました。");
-            PhotoData photoData = this.getPhotoData(id);
+            PhotoData photoData = this.getPhotoData(id, loginUser);
             redirectAttributes.addFlashAttribute("item", photoData);
         }
 
         return "redirect:/photo/" + id;
     }
 
-    private PhotoData getPhotoData(String id) {
+    private PhotoData getPhotoData(String id, LoginUser loginUser) {
         Photo photo = photoService.findById(id).get();
 
         Collections.sort(photo.getComments(), new Comparator<Comment>() {
@@ -205,7 +205,7 @@ public class PhotoController {
 
         String url = s3Service.getUrl(photo.getFilename());
 
-        PhotoData photoData = new PhotoData(photo, url);
+        PhotoData photoData = new PhotoData(photo, url, loginUser.getUser());
 
         return photoData;
     }
